@@ -97,3 +97,10 @@ def main():
         "Remember to stretch!",
         "A positive mindset brings positive things."
     ]
+    st.write(random.choice(health_tips))
+
+    # Refill Reminder (Simulated)
+    check_inventory()
+
+if __name__ == "__main__":
+    main()
