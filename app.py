@@ -1,5 +1,4 @@
 import streamlit as st
-import speech_recognition as sr
 from textblob import TextBlob
 import pandas as pd
 import random
@@ -16,23 +15,6 @@ coffee_suggestions = {
     'tired': 'Espresso',
     'neutral': 'Latte'
 }
-
-# Function to simulate voice command input
-def voice_command():
-    r = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.write("Listening for your order...")
-        audio = r.listen(source)
-        try:
-            command = r.recognize_google(audio)
-            st.success(f"You said: {command}")
-            return command
-        except sr.UnknownValueError:
-            st.error("Sorry, I could not understand the audio.")
-            return ""
-        except sr.RequestError:
-            st.error("Could not request results from Google Speech Recognition service.")
-            return ""
 
 # Function to detect mood and suggest coffee
 def detect_mood(text):
@@ -69,20 +51,13 @@ def check_inventory():
 # Main application
 def main():
     st.title("Code Caffe - Smart Coffee Vending Machine")
-    
-    # Voice Command Input
-    if st.button("Place Order with Voice Command"):
-        command = voice_command()
-        if command:
-            mood = detect_mood(command)
-            coffee_type = mood
-            process_order(coffee_type)
 
     # WhatsApp/Telegram Ordering
     order_input = st.text_input("Order via WhatsApp/Telegram:")
     if st.button("Place Order"):
         if order_input:
-            process_order(order_input)
+            mood = detect_mood(order_input)
+            process_order(mood)
 
     # Coffee Customization Options
     st.sidebar.header("Coffee Customization")
@@ -122,10 +97,3 @@ def main():
         "Remember to stretch!",
         "A positive mindset brings positive things."
     ]
-    st.write(random.choice(health_tips))
-
-    # Refill Reminder (Simulated)
-    check_inventory()
-
-if __name__ == "__main__":
-    main()
