@@ -1,6 +1,4 @@
 import streamlit as st
-import cv2
-import numpy as np
 import tempfile
 import time
 import speech_recognition as sr
@@ -8,6 +6,13 @@ import pandas as pd
 import random
 from textblob import TextBlob
 from deepface import DeepFace
+
+# Try importing OpenCV (If unavailable, disable face detection)
+try:
+    import cv2
+    opencv_available = True
+except ImportError:
+    opencv_available = False
 
 # Initialize session states
 if "order_queue" not in st.session_state:
@@ -43,7 +48,7 @@ def detect_mood(img_path):
         analysis = DeepFace.analyze(img_path, actions=["emotion"], enforce_detection=False)
         detected_emotion = analysis[0]["dominant_emotion"]
         return detected_emotion.capitalize(), mood_to_coffee.get(detected_emotion, "Espresso ☕")
-    except Exception as e:
+    except Exception:
         return "Neutral", "Espresso ☕"
 
 # Function to get voice command
@@ -74,24 +79,27 @@ def add_order(name, coffee_type, size, sugar, milk):
 # Streamlit UI
 st.title("☕ Code Caffe - AI-Powered Coffee Vending Machine")
 
-# Face-Based Mood Detection
+# Face-Based Mood Detection (Only if OpenCV is available)
 st.subheader("🎥 Detect Mood & Get Coffee Suggestion")
-cam = cv2.VideoCapture(0)
+if opencv_available:
+    cam = cv2.VideoCapture(0)
 
-if st.button("Capture Mood"):
-    ret, frame = cam.read()
-    if ret:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as img_file:
-            img_path = img_file.name
-            cv2.imwrite(img_path, frame)
-        
-        st.image(img_path, caption="Captured Image", use_column_width=True)
-        mood, coffee_suggestion = detect_mood(img_path)
-        st.success(f"Detected Mood: {mood}")
-        st.info(f"Suggested Coffee: {coffee_suggestion}")
-        st.session_state["last_suggested_coffee"] = coffee_suggestion
+    if st.button("Capture Mood"):
+        ret, frame = cam.read()
+        if ret:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as img_file:
+                img_path = img_file.name
+                cv2.imwrite(img_path, frame)
+            
+            st.image(img_path, caption="Captured Image", use_column_width=True)
+            mood, coffee_suggestion = detect_mood(img_path)
+            st.success(f"Detected Mood: {mood}")
+            st.info(f"Suggested Coffee: {coffee_suggestion}")
+            st.session_state["last_suggested_coffee"] = coffee_suggestion
 
-cam.release()
+    cam.release()
+else:
+    st.warning("Face detection is disabled because OpenCV is missing.")
 
 # Voice Command Ordering
 st.subheader("🎙️ Order via Voice")
