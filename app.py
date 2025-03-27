@@ -1,7 +1,9 @@
 import streamlit as st
+import speech_recognition as sr
 from textblob import TextBlob
 import pandas as pd
 import random
+import datetime
 
 # Initialize global variables
 orders = []
@@ -13,7 +15,12 @@ coffee_suggestions = {
     'happy': 'Cappuccino',
     'sad': 'Hot Chocolate',
     'tired': 'Espresso',
-    'neutral': 'Latte'
+    'neutral': 'Latte',
+    'excited': 'Mocha',
+    'stressed': 'Americano',
+    'relaxed': 'Flat White',
+    'bored': 'Cold Brew',
+    'adventurous': 'Affogato'
 }
 
 # Function to detect mood and suggest coffee
@@ -23,10 +30,39 @@ def detect_mood(text):
         return coffee_suggestions['happy']
     elif analysis.sentiment.polarity < 0:
         return coffee_suggestions['sad']
+    elif "tired" in text.lower():
+        return coffee_suggestions['tired']
+    elif "excited" in text.lower():
+        return coffee_suggestions['excited']
+    elif "stressed" in text.lower():
+        return coffee_suggestions['stressed']
+    elif "relaxed" in text.lower():
+        return coffee_suggestions['relaxed']
+    elif "bored" in text.lower():
+        return coffee_suggestions['bored']
+    elif "adventurous" in text.lower():
+        return coffee_suggestions['adventurous']
     else:
         return coffee_suggestions['neutral']
 
-# Function to simulate order processing
+# Function to convert speech to text
+def speech_to_text():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.info("Listening for your order...")
+        audio = r.listen(source)
+        try:
+            text = r.recognize_google(audio, language='en-IN')  # Change language code as needed
+            st.success("You said: " + text)
+            return text
+        except sr.UnknownValueError:
+            st.error("Could not understand audio")
+            return ""
+        except sr.RequestError as e:
+            st.error(f"Could not request results; {e}")
+            return ""
+
+# Function to process order
 def process_order(order):
     global rewards
     orders.append(order)
@@ -48,12 +84,23 @@ def check_inventory():
         if amount < 3:
             st.warning(f"Low on {item}. Please refill!")
 
+# Function to simulate payment
+def simulate_payment():
+    st.success("Payment successful! Thank you for your order.")
+
 # Main application
 def main():
     st.title("Code Caffe - Smart Coffee Vending Machine")
 
-    # WhatsApp/Telegram Ordering
-    order_input = st.text_input("Order via WhatsApp/Telegram:")
+    # Voice Ordering
+    if st.button("Order via Voice"):
+        order_input = speech_to_text()
+        if order_input:
+            mood = detect_mood(order_input)
+            process_order(mood)
+
+    # WhatsApp Ordering Simulation
+    order_input = st.text_input("Order via WhatsApp:")
     if st.button("Place Order"):
         if order_input:
             mood = detect_mood(order_input)
@@ -69,13 +116,6 @@ def main():
     
     if st.sidebar.button("Save Favorite Customization"):
         st.success("Favorite customization saved!")
-
-    # Eco-Friendly Mode
-    eco_friendly = st.sidebar.checkbox("Use Reusable Cup")
-    if eco_friendly:
-        global rewards
-        rewards += 1  # Increment rewards for using a reusable cup
-        st.success("Thank you for using a reusable cup! Rewards increased.")
 
     # AI Queue Management System
     st.sidebar.header("Order Queue")
@@ -102,5 +142,9 @@ def main():
     # Refill Reminder (Simulated)
     check_inventory()
 
-if __name__ == "__main__":
+    # Touchless Payment Option
+    if st.button("Confirm Order and Pay"):
+        simulate_payment()
+
+if __name__ == "__
     main()
